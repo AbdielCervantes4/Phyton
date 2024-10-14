@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversión Interna IEEE 754</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input[type="number"], input[type="button"] {
+            width: calc(100% - 20px);
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        input[type="button"] {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        input[type="button"]:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .resultado {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Representación interna de números de Punto flotante IEEE 754</h1>
+    <div class="container">
+        <input type="number" id="decimal" step="any" placeholder="Ingrese un número decimal">
+        <input type="button" value="Convertir" onclick="convertirIEEE754()">
+
+        <h2>Parte Entera</h2>
+        <table id="tablaEntera">
+            <tr><th>Valor</th><th>Divisor</th><th>Cociente</th><th>Residuo</th></tr>
+        </table>
+
+        <h2>Parte Fraccionaria</h2>
+        <table id="tablaFraccionaria">
+            <tr><th>Valor</th><th>Multiplicador</th><th>Producto</th><th>Dígito</th></tr>
+        </table>
+
+        <h2>Resultado IEEE 754</h2>
+        <div id="resultado" class="resultado"></div>
+    </div>
+
+    <script>
+        function convertirIEEE754() {
+            let valor = parseFloat(document.getElementById("decimal").value);
+            if (isNaN(valor)) {
+                alert("Ingrese un número válido.");
+                return;
+            }
+
+            let signo = valor < 0 ? 1 : 0;
+            valor = Math.abs(valor);
+
+            // Parte Entera
+            let parteEntera = Math.floor(valor);
+            let binEntero = "";
+            let tablaEntera = document.getElementById("tablaEntera");
+            tablaEntera.innerHTML = `<tr><th>Valor</th><th>Divisor</th><th>Cociente</th><th>Residuo</th></tr>`;
+            while (parteEntera > 0) {
+                let cociente = Math.floor(parteEntera / 2);
+                let residuo = parteEntera % 2;
+                binEntero = residuo + binEntero;
+                tablaEntera.innerHTML += `<tr><td>${parteEntera}</td><td>2</td><td>${cociente}</td><td>${residuo}</td></tr>`;
+                parteEntera = cociente;
+            }
+
+            // Parte Fraccionaria
+            let parteFraccionaria = valor % 1;
+            let binFraccionario = "";
+            let tablaFraccionaria = document.getElementById("tablaFraccionaria");
+            tablaFraccionaria.innerHTML = `<tr><th>Valor</th><th>Multiplicador</th><th>Producto</th><th>Dígito</th></tr>`;
+            for (let i = 0; i < 23; i++) {
+                let producto = parteFraccionaria * 2;
+                let digito = Math.floor(producto);
+                binFraccionario += digito;
+                tablaFraccionaria.innerHTML += `<tr><td>${parteFraccionaria}</td><td>2</td><td>${producto}</td><td>${digito}</td></tr>`;
+                parteFraccionaria = producto % 1;
+            }
+
+            // Exponente y Mantisa
+            let binarioNormalizado = binEntero + binFraccionario;
+            let primerUno = binarioNormalizado.indexOf("1");
+            let exponente = 127 + (binEntero.length - primerUno - 1);
+            let exponenteBinario = exponente.toString(2).padStart(8, "0");
+            let mantisa = binarioNormalizado.slice(primerUno + 1, primerUno + 24);
+
+            // Resultado Final
+            let ieee754 = `${signo}${exponenteBinario}${mantisa}`;
+            document.getElementById("resultado").innerText = `IEEE 754: ${ieee754}`;
+        }
+    </script>
+
+</body>
+</html>
